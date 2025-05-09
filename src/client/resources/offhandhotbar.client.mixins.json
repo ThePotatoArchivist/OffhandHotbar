@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "archives.tater.offhandhotbar.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ClientPlayNetworkHandlerMixin",
+    "InGameHudMixin",
+    "MinecraftClientMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+	}
+}
