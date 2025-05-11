@@ -4,14 +4,11 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class OffhandHotbar implements ClientModInitializer {
 	public static int selectedOffhandSlot = 0;
@@ -54,18 +51,10 @@ public class OffhandHotbar implements ClientModInitializer {
 		interactionManager.clickSlot(player.currentScreenHandler.syncId, slot, OFFHAND_SWAP_ID, SlotActionType.SWAP, player);
 	}
 
-	public static @Nullable List<Slot> getScreenSlots(MinecraftClient client) {
-		if (client.currentScreen == null)
-			return null;
-
-		if (client.player == null) return null;
-		if (client.player.currentScreenHandler == null) return null;
-		if (client.player.currentScreenHandler instanceof PlayerScreenHandler) return null;
-		return client.player.currentScreenHandler.slots;
-	}
-
-	public static int findOffhandSlot(List<Slot> slots, int slotIndex, ClientPlayerEntity player) {
-		for (var slot : slots)
+	public static int findOffhandSlot(int slotIndex, ClientPlayerEntity player) {
+		if (player.currentScreenHandler instanceof PlayerScreenHandler)
+			return slotIndex;
+		for (var slot : player.currentScreenHandler.slots)
 			if (slot.inventory == player.getInventory() && slot.getIndex() == slotIndex)
 				return slot.id;
 		return -1;
@@ -83,16 +72,14 @@ public class OffhandHotbar implements ClientModInitializer {
 			}
             if (client.player == null) return;
 
-			var slots = getScreenSlots(client);
-
-            if (slots == null) {
+            if (!(client.currentScreen instanceof HandledScreen<?>) || client.player.currentScreenHandler == null) {
                 if (!swapped) {
                     swapOffhand(client, getOffhandHotbarSlot(selectedOffhandSlot));
                     swapped = true;
                 }
             } else {
                 if (swapped) {
-                    swapOffhand(client, findOffhandSlot(slots, getOffhandHotbarSlot(selectedOffhandSlot), client.player));
+                    swapOffhand(client, findOffhandSlot(getOffhandHotbarSlot(selectedOffhandSlot), client.player));
                     swapped = false;
                 }
             }
