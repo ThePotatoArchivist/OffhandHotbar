@@ -15,6 +15,9 @@
 	"icon": "assets/offhandhotbar/icon.png",
 	"environment": "client",
 	"entrypoints": {
+		"main": [
+			"archives.tater.offhandhotbar.OffhandHotbar"
+		],
 		"client": [
 			"archives.tater.offhandhotbar.OffhandHotbar"
 		]

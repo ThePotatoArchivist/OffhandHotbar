@@ -1,16 +1,27 @@
 package archives.tater.offhandhotbar;
 
+import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.Identifier;
+import org.lwjgl.glfw.GLFW;
 
-public class OffhandHotbar implements ClientModInitializer {
+import static net.minecraft.util.Util.createTranslationKey;
+
+public class OffhandHotbar implements ModInitializer, ClientModInitializer {
+	public static final String MOD_ID = "offhandhotbar";
+
 	public static int selectedOffhandSlot = 0;
 	private static int lastOffhandSlot = selectedOffhandSlot;
 	public static boolean swapped = false;
@@ -21,6 +32,13 @@ public class OffhandHotbar implements ClientModInitializer {
 	public static final float HOTBAR_WIDTH = 91;
 	public static final float HOTBAR_GAP = 4;
 	public static final float HOTBAR_OFFSET = HOTBAR_WIDTH + HOTBAR_GAP / 2;
+
+	public static final KeyBinding CONTROL_OPPOSITE_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+			createTranslationKey("key", Identifier.of(MOD_ID, "control_opposite")),
+			InputUtil.Type.KEYSYM,
+			GLFW.GLFW_KEY_LEFT_ALT,
+			createTranslationKey("category", Identifier.of(MOD_ID, "offhandhotbar"))
+	));
 
 	public static int getOffhandHotbarSlot(int selectedSlot) {
 		return PlayerScreenHandler.INVENTORY_START + SLOTS_OFFSET + selectedSlot;
@@ -70,6 +88,7 @@ public class OffhandHotbar implements ClientModInitializer {
 						getOffhandHotbarSlot(selectedOffhandSlot));
 				lastOffhandSlot = selectedOffhandSlot;
 			}
+
             if (client.player == null) return;
 
             if (!(client.currentScreen instanceof HandledScreen<?>) || client.player.currentScreenHandler == null) {
@@ -88,5 +107,10 @@ public class OffhandHotbar implements ClientModInitializer {
 			swapOffhand(client, getOffhandHotbarSlot(selectedOffhandSlot));
 			swapped = false;
 		});
+	}
+
+	@Override
+	public void onInitialize() {
+		MidnightConfig.init(MOD_ID, OffhandHotbarConfig.class);
 	}
 }
