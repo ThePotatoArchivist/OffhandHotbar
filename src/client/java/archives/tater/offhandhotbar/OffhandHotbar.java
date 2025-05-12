@@ -29,9 +29,11 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 	public static final int OFFHAND_SWAP_ID = 40;
 	public static final int SLOTS_OFFSET = 18;
 
-	public static final float HOTBAR_WIDTH = 91;
-	public static final float HOTBAR_GAP = 4;
-	public static final float HOTBAR_OFFSET = HOTBAR_WIDTH + HOTBAR_GAP / 2;
+	public static final int HOTBAR_WIDTH = 91;
+	public static final int HOTBAR_GAP = 4;
+	public static final int HOTBAR_X_OFFSET = HOTBAR_WIDTH + HOTBAR_GAP / 2;
+	public static final int HOTBAR_HEIGHT = 22;
+	public static final int HOTBAR_Y_OFFSET = -(HOTBAR_HEIGHT + HOTBAR_GAP);
 
 	public static final KeyBinding CONTROL_OPPOSITE_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
 			createTranslationKey("key", Identifier.of(MOD_ID, "control_opposite")),

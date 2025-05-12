@@ -5,7 +5,9 @@ import net.minecraft.util.Hand;
 
 public class OffhandHotbarConfig extends MidnightConfig {
     public enum DisplayMode {
-        SIDE_BY_SIDE, STACKED, VERTICAL
+        SIDE_BY_SIDE, STACKED, STACKED_SWAPPED, VERTICAL, VERTICAL_SWAPPED;
+
+        public final boolean isStacked() { return this == STACKED || this == STACKED_SWAPPED; }
     }
 
     @Entry
