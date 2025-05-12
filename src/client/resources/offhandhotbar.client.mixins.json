@@ -4,12 +4,10 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "InGameHudMixin",
-    "MinecraftClientMixin"
+    "MinecraftClientMixin",
+    "MouseMixin"
   ],
   "injectors": {
     "defaultRequire": 1
-  },
-  "mixins": [
-    "PlayerInventoryMixin"
-  ]
+  }
 }

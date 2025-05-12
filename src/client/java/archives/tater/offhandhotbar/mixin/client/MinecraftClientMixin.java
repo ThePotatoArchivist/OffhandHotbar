@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public class MinecraftClientMixin {
     @WrapOperation(
             method = "handleInputEvents",
-            at = @At(value = "FIELD", target = "Lnet/minecraft/entity/player/PlayerInventory;selectedSlot:I")
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;setSelectedSlot(I)V")
     )
     private void setOffhandSlot(PlayerInventory instance, int value, Operation<Void> original) {
         if (OffhandHotbarConfig.keyboardControls == Hand.OFF_HAND ^ OffhandHotbar.CONTROL_OPPOSITE_KEY.isPressed())

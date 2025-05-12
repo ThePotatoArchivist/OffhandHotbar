@@ -5,17 +5,17 @@ import archives.tater.offhandhotbar.OffhandHotbarConfig;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.client.Mouse;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.Hand;
-import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-@Mixin(PlayerInventory.class)
-public class PlayerInventoryMixin {
+@Mixin(Mouse.class)
+public class MouseMixin {
     @WrapOperation(
-            method = "scrollInHotbar",
-            at = @At(value = "FIELD", target = "Lnet/minecraft/entity/player/PlayerInventory;selectedSlot:I", opcode = Opcodes.PUTFIELD)
+            method = "onMouseScroll",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;setSelectedSlot(I)V")
     )
     private void scrollOffhand(PlayerInventory instance, int value, Operation<Void> original) {
         if (OffhandHotbarConfig.scrollControls == Hand.OFF_HAND ^ OffhandHotbar.CONTROL_OPPOSITE_KEY.isPressed())
@@ -25,8 +25,8 @@ public class PlayerInventoryMixin {
     }
 
     @ModifyExpressionValue(
-            method = "scrollInHotbar",
-            at = @At(value = "FIELD", target = "Lnet/minecraft/entity/player/PlayerInventory;selectedSlot:I", opcode = Opcodes.GETFIELD)
+            method = "onMouseScroll",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;getSelectedSlot()I")
     )
     private int scrollOffhand(int original) {
         return (OffhandHotbarConfig.scrollControls == Hand.OFF_HAND ^ OffhandHotbar.CONTROL_OPPOSITE_KEY.isPressed())

@@ -12,6 +12,7 @@ import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -24,6 +25,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.function.Function;
 
 import static archives.tater.offhandhotbar.OffhandHotbar.getOffhandHotbarSlot;
 
@@ -117,11 +120,11 @@ public abstract class InGameHudMixin {
 			slice = @Slice(
 					from = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/hud/InGameHud;HOTBAR_SELECTION_TEXTURE:Lnet/minecraft/util/Identifier;")
 			),
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawGuiTexture(Lnet/minecraft/util/Identifier;IIII)V", ordinal = 0)
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawGuiTexture(Ljava/util/function/Function;Lnet/minecraft/util/Identifier;IIII)V", ordinal = 0)
 	)
-	private void fixSelectionBottomBorder(DrawContext instance, Identifier texture, int x, int y, int width, int height, Operation<Void> original) {
-		original.call(instance, texture, x, y, width, height);
-		instance.drawGuiTexture(texture, 24, 23, 0, 0, x, y + height, width, 1);
+	private void fixSelectionBottomBorder(DrawContext instance, Function<Identifier, RenderLayer> renderLayers, Identifier sprite, int x, int y, int width, int height, Operation<Void> original) {
+		original.call(instance, renderLayers, sprite, x, y, width, height);
+		instance.drawGuiTexture(renderLayers, sprite, 24, 23, 0, 0, x, y + height, width, 1);
 	}
 
 	@WrapOperation(
@@ -141,7 +144,7 @@ public abstract class InGameHudMixin {
 
 	@ModifyArg(
 			method = "renderHotbar",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/DefaultedList;get(I)Ljava/lang/Object;")
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;getStack(I)Lnet/minecraft/item/ItemStack;")
 	)
 	private int useRow3Items(int index, @Share("offhand") LocalBooleanRef offhand) {
 		return offhand.get() ? getOffhandHotbarSlot(index) : index;
@@ -166,7 +169,7 @@ public abstract class InGameHudMixin {
 
 	@ModifyExpressionValue(
 			method = "renderHotbar",
-			at = @At(value = "FIELD", target = "Lnet/minecraft/entity/player/PlayerInventory;selectedSlot:I")
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;getSelectedSlot()I")
 	)
 	private int useOffhandSlot(int original, @Share("offhand") LocalBooleanRef offhand) {
 		return offhand.get() ? OffhandHotbar.selectedOffhandSlot : original;
