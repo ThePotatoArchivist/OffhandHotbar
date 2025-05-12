@@ -1,0 +1,16 @@
+{
+  "offhandhotbar.midnightconfig.title": "Offhand Hotbar",
+  "offhandhotbar.midnightconfig.displayMode": "Display Mode",
+  "offhandhotbar.midnightconfig.scrollControls": "Scrolling controls",
+  "offhandhotbar.midnightconfig.keyboardControls": "Keyboard controls",
+  "offhandhotbar.midnightconfig.enum.DisplayMode.SIDE_BY_SIDE": "Side by Side",
+  "offhandhotbar.midnightconfig.enum.DisplayMode.STACKED": "Stacked",
+  "offhandhotbar.midnightconfig.enum.DisplayMode.STACKED_SWAPPED": "Stacked Swapped",
+  "offhandhotbar.midnightconfig.enum.DisplayMode.VERTICAL": "Vertical",
+  "offhandhotbar.midnightconfig.enum.DisplayMode.VERTICAL_SWAPPED": "Vertical Swapped",
+  "offhandhotbar.midnightconfig.enum.Hand.MAIN_HAND": "Main Hand",
+  "offhandhotbar.midnightconfig.enum.Hand.OFF_HAND": "Off Hand",
+  "offhandhotbar.midnightconfig.keybindInfo": "Control Opposite Hotbar keybind located in Keybinds menu",
+  "key.offhandhotbar.control_opposite": "Control Opposite Hotbar",
+  "category.offhandhotbar.offhandhotbar": "Offhand Hotbar"
+}
