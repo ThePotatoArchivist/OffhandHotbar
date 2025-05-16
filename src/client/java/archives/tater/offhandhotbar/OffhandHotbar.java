@@ -80,16 +80,19 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 		return -1;
 	}
 
+	public static void updateOffhandSlots(MinecraftClient client) {
+        if (selectedOffhandSlot == lastOffhandSlot) return;
+        offhandCycle(client,
+                getOffhandHotbarSlot(lastOffhandSlot),
+                getOffhandHotbarSlot(selectedOffhandSlot));
+        lastOffhandSlot = selectedOffhandSlot;
+    }
+
 	@Override
 	public void onInitializeClient() {
 		// This entrypoint is suitable for setting up client-specific logic, such as rendering.
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
-			if (selectedOffhandSlot != lastOffhandSlot) {
-				offhandCycle(client,
-						getOffhandHotbarSlot(lastOffhandSlot),
-						getOffhandHotbarSlot(selectedOffhandSlot));
-				lastOffhandSlot = selectedOffhandSlot;
-			}
+			updateOffhandSlots(client);
 
             if (client.player == null) return;
 
