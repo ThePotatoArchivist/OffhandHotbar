@@ -17,6 +17,8 @@ public class OffhandHotbarConfig extends MidnightConfig {
     @Entry
     public static Hand keyboardControls = Hand.OFF_HAND;
 
-    @Comment(centered = true)
-    public static Comment keybindInfo;
+    @Override
+    public void onTabInit(String tabName, MidnightConfigListWidget list, MidnightConfigScreen screen) {
+        MidnightLibExtras.KeybindButton.add(OffhandHotbar.CONTROL_OPPOSITE_KEY, list, screen);
+    }
 }
