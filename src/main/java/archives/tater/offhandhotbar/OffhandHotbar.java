@@ -24,6 +24,7 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 
 	public static int selectedOffhandSlot = 0;
 	private static int lastOffhandSlot = selectedOffhandSlot;
+	public static boolean attemptedSwap = false;
 	public static boolean swapped = false;
 
 	public static final int OFFHAND_SWAP_ID = 40;
@@ -68,16 +69,7 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 	}
 
 	public static void swapOffhand(ClientPlayerInteractionManager interactionManager, ClientPlayerEntity player, int slot) {
-		interactionManager.clickSlot(player.currentScreenHandler.syncId, slot, OFFHAND_SWAP_ID, SlotActionType.SWAP, player);
-	}
-
-	public static int findOffhandSlot(int slotIndex, ClientPlayerEntity player) {
-		if (player.currentScreenHandler instanceof PlayerScreenHandler)
-			return slotIndex;
-		for (var slot : player.currentScreenHandler.slots)
-			if (slot.inventory == player.getInventory() && slot.getIndex() == slotIndex)
-				return slot.id;
-		return -1;
+		interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, OFFHAND_SWAP_ID, SlotActionType.SWAP, player);
 	}
 
 	public static void updateOffhandSlots(MinecraftClient client) {
@@ -103,7 +95,7 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
                 }
             } else {
                 if (swapped) {
-                    swapOffhand(client, findOffhandSlot(getOffhandHotbarSlot(selectedOffhandSlot), client.player));
+                    swapOffhand(client, getOffhandHotbarSlot(selectedOffhandSlot));
                     swapped = false;
                 }
             }
