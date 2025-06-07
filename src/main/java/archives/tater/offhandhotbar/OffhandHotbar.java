@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
@@ -69,7 +70,13 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 	}
 
 	public static void swapOffhand(ClientPlayerInteractionManager interactionManager, ClientPlayerEntity player, int slot) {
+		var screenHandler = player.currentScreenHandler;
+		var replace = screenHandler instanceof CreativeInventoryScreen.CreativeScreenHandler;
+		if (replace)
+			player.currentScreenHandler = player.playerScreenHandler;
 		interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, OFFHAND_SWAP_ID, SlotActionType.SWAP, player);
+		if (replace)
+			player.currentScreenHandler = screenHandler;
 	}
 
 	public static void updateOffhandSlots(MinecraftClient client) {
