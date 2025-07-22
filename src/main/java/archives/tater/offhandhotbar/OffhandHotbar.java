@@ -5,9 +5,8 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
+import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen.CreativeScreenHandler;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
@@ -25,7 +24,6 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 
 	public static int selectedOffhandSlot = 0;
 	private static int lastOffhandSlot = selectedOffhandSlot;
-	public static boolean attemptedSwap = false;
 	public static boolean swapped = false;
 
 	public static final int OFFHAND_SWAP_ID = 40;
@@ -48,7 +46,18 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 		return PlayerScreenHandler.INVENTORY_START + SLOTS_OFFSET + selectedSlot;
 	}
 
+	public static int getOffhandHotbarScreenHandlerSlot(int selectedSlot, MinecraftClient client) {
+		var player = client.player;
+		if (player == null) return -1;
+		var playerSlot = getOffhandHotbarSlot(selectedSlot);
+		var currentScreenHandler = player.currentScreenHandler;
+		if (currentScreenHandler == null || currentScreenHandler instanceof PlayerScreenHandler || currentScreenHandler instanceof CreativeScreenHandler)
+			return playerSlot;
+		return currentScreenHandler.getSlotIndex(player.getInventory(), playerSlot).orElse(-1);
+	}
+
 	public static void offhandCycle(MinecraftClient client, int slot1, int slot2) {
+		if (slot1 == -1 || slot2 == -1) return;
 		var interactionManager = client.interactionManager;
 		if (interactionManager == null) return;
 		var player = client.player;
@@ -62,6 +71,7 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 	}
 
 	public static void swapOffhand(MinecraftClient client, int slot) {
+		if (slot == -1) return;
 		var interactionManager = client.interactionManager;
 		if (interactionManager == null) return;
 		var player = client.player;
@@ -70,20 +80,15 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 	}
 
 	public static void swapOffhand(ClientPlayerInteractionManager interactionManager, ClientPlayerEntity player, int slot) {
-		var screenHandler = player.currentScreenHandler;
-		var replace = screenHandler instanceof CreativeInventoryScreen.CreativeScreenHandler;
-		if (replace)
-			player.currentScreenHandler = player.playerScreenHandler;
-		interactionManager.clickSlot(player.playerScreenHandler.syncId, slot, OFFHAND_SWAP_ID, SlotActionType.SWAP, player);
-		if (replace)
-			player.currentScreenHandler = screenHandler;
+		interactionManager.clickSlot(player.currentScreenHandler.syncId, slot, OFFHAND_SWAP_ID, SlotActionType.SWAP, player);
 	}
 
 	public static void updateOffhandSlots(MinecraftClient client) {
         if (selectedOffhandSlot == lastOffhandSlot) return;
+		if (client.player == null) return;
         offhandCycle(client,
-                getOffhandHotbarSlot(lastOffhandSlot),
-                getOffhandHotbarSlot(selectedOffhandSlot));
+                getOffhandHotbarScreenHandlerSlot(lastOffhandSlot, client),
+                getOffhandHotbarScreenHandlerSlot(selectedOffhandSlot, client));
         lastOffhandSlot = selectedOffhandSlot;
     }
 
@@ -97,20 +102,21 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 
             if (!(client.currentScreen instanceof HandledScreen<?>) || client.player.currentScreenHandler == null) {
                 if (!swapped) {
-                    swapOffhand(client, getOffhandHotbarSlot(selectedOffhandSlot));
+                    swapOffhand(client, getOffhandHotbarScreenHandlerSlot(selectedOffhandSlot, client));
                     swapped = true;
                 }
             } else {
                 if (swapped) {
-                    swapOffhand(client, getOffhandHotbarSlot(selectedOffhandSlot));
+                    swapOffhand(client, getOffhandHotbarScreenHandlerSlot(selectedOffhandSlot, client));
                     swapped = false;
                 }
             }
         });
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-			swapOffhand(client, getOffhandHotbarSlot(selectedOffhandSlot));
-			swapped = false;
-		});
+//		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+//			if (client.player != null)
+//				swapOffhand(client, getOffhandHotbarSlot(selectedOffhandSlot, client.player));
+//			swapped = false;
+//		});
 	}
 
 	@Override
