@@ -10,34 +10,31 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalBooleanRef;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.RotationAxis;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.function.Function;
-
 import static archives.tater.offhandhotbar.OffhandHotbar.getOffhandHotbarSlot;
+import static net.minecraft.util.math.MathHelper.HALF_PI;
 
 @Mixin(InGameHud.class)
 public abstract class InGameHudMixin {
 	@Shadow
     protected abstract @Nullable PlayerEntity getCameraPlayer();
-
-	@Shadow public abstract void tick(boolean paused);
-
-	@Shadow protected abstract void tick();
 
 	@Inject(
 			method = "renderMainHud",
@@ -45,8 +42,8 @@ public abstract class InGameHudMixin {
 	)
 	private void shiftHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
 		if (!OffhandHotbarConfig.displayMode.isStacked()) return;
-		context.getMatrices().push();
-		context.getMatrices().translate(0, OffhandHotbar.HOTBAR_Y_OFFSET, 0);
+		context.getMatrices().pushMatrix();
+		context.getMatrices().translate(0, OffhandHotbar.HOTBAR_Y_OFFSET);
 	}
 
 	@Inject(
@@ -55,16 +52,7 @@ public abstract class InGameHudMixin {
 	)
 	private void unshiftHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
 		if (!OffhandHotbarConfig.displayMode.isStacked()) return;
-		context.getMatrices().pop();
-	}
-
-	@ModifyVariable(
-			method = "renderExperienceLevel",
-			ordinal = 2,
-			at = @At(value = "STORE")
-	)
-	private int shiftXpLevel(int value) {
-		return OffhandHotbarConfig.displayMode.isStacked() ? value + OffhandHotbar.HOTBAR_Y_OFFSET : value;
+		context.getMatrices().popMatrix();
 	}
 
 	@Unique
@@ -73,10 +61,9 @@ public abstract class InGameHudMixin {
 				leftSide
 						? context.getScaledWindowHeight()
 						: context.getScaledWindowHeight() + context.getScaledWindowWidth() - OffhandHotbar.HOTBAR_HEIGHT,
-				-(context.getScaledWindowWidth() - context.getScaledWindowHeight()) / 2f,
-				0
+				-(context.getScaledWindowWidth() - context.getScaledWindowHeight()) / 2f
 		);
-		context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90));
+		context.getMatrices().rotate(HALF_PI);
 	}
 
 	@WrapMethod(
@@ -88,31 +75,31 @@ public abstract class InGameHudMixin {
 		var mx = mainArm == Arm.RIGHT ? 1 : -1;
 		var matrices = context.getMatrices();
 
-		matrices.push();
+		matrices.pushMatrix();
 		switch (OffhandHotbarConfig.displayMode) {
-			case SIDE_BY_SIDE -> matrices.translate(mx * OffhandHotbar.HOTBAR_X_OFFSET, 0, 0);
+			case SIDE_BY_SIDE -> matrices.translate(mx * OffhandHotbar.HOTBAR_X_OFFSET, 0);
 			case STACKED -> {
-				matrices.push();
-				matrices.translate(0, -OffhandHotbar.HOTBAR_Y_OFFSET, 0);
+				matrices.pushMatrix();
+				matrices.translate(0, -OffhandHotbar.HOTBAR_Y_OFFSET);
 			}
 			case VERTICAL_SWAPPED -> {
-				matrices.push();
+				matrices.pushMatrix();
 				offhandhotbar$hotbarRotate(context, mainArm == Arm.LEFT);
 			}
 		}
 		offhand.set(false);
 		original.call(context, tickCounter);
 		switch (OffhandHotbarConfig.displayMode) {
-			case SIDE_BY_SIDE -> matrices.translate(-mx * OffhandHotbar.HOTBAR_X_OFFSET * 2, 0, 0);
-			case STACKED, VERTICAL_SWAPPED -> matrices.pop();
-			case STACKED_SWAPPED -> matrices.translate(0, -OffhandHotbar.HOTBAR_Y_OFFSET, 0);
+			case SIDE_BY_SIDE -> matrices.translate(-mx * OffhandHotbar.HOTBAR_X_OFFSET * 2, 0);
+			case STACKED, VERTICAL_SWAPPED -> matrices.popMatrix();
+			case STACKED_SWAPPED -> matrices.translate(0, -OffhandHotbar.HOTBAR_Y_OFFSET);
 			case VERTICAL -> {
 				offhandhotbar$hotbarRotate(context, mainArm == Arm.RIGHT);
 			}
         }
 		offhand.set(true);
 		original.call(context, tickCounter);
-		matrices.pop();
+		matrices.popMatrix();
 	}
 
 	@WrapOperation(
@@ -120,11 +107,11 @@ public abstract class InGameHudMixin {
 			slice = @Slice(
 					from = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/hud/InGameHud;HOTBAR_SELECTION_TEXTURE:Lnet/minecraft/util/Identifier;")
 			),
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawGuiTexture(Ljava/util/function/Function;Lnet/minecraft/util/Identifier;IIII)V", ordinal = 0)
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawGuiTexture(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/util/Identifier;IIII)V", ordinal = 0)
 	)
-	private void fixSelectionBottomBorder(DrawContext instance, Function<Identifier, RenderLayer> renderLayers, Identifier sprite, int x, int y, int width, int height, Operation<Void> original) {
-		original.call(instance, renderLayers, sprite, x, y, width, height);
-		instance.drawGuiTexture(renderLayers, sprite, 24, 23, 0, 0, x, y + height, width, 1);
+	private void fixSelectionBottomBorder(DrawContext instance, RenderPipeline pipeline, Identifier sprite, int x, int y, int width, int height, Operation<Void> original) {
+		original.call(instance, pipeline, sprite, x, y, width, height);
+		instance.drawGuiTexture(pipeline, sprite, 24, 23, 0, 0, x, y + height, width, 1);
 	}
 
 	@WrapOperation(
@@ -136,10 +123,10 @@ public abstract class InGameHudMixin {
 			original.call(instance, context, x, y, tickCounter, player, stack, seed);
 			return;
 		}
-		context.getMatrices().push();
-		context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(-90), x + 8, y + 8, 0);
+		context.getMatrices().pushMatrix();
+		context.getMatrices().rotateAbout(-HALF_PI, x + 8, y + 8);
 		original.call(instance, context, x, y, tickCounter, player, stack, seed);
-		context.getMatrices().pop();
+		context.getMatrices().popMatrix();
 	}
 
 	@ModifyArg(
