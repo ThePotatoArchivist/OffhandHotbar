@@ -36,11 +36,23 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 	public static final int HOTBAR_HEIGHT = 22;
 	public static final int HOTBAR_Y_OFFSET = -(HOTBAR_HEIGHT + HOTBAR_GAP);
 
+	private static final int[] forwardSlotOrder = {0, 9, 18, 0};
+	private static final int[] backwardSlotOrder = {18, 9, 0, 18};
+
+	public static final String KEY_CATEGORY = createTranslationKey("category", Identifier.of(MOD_ID, "offhandhotbar"));
+
 	public static final KeyBinding CONTROL_OPPOSITE_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
 			createTranslationKey("key", Identifier.of(MOD_ID, "control_opposite")),
 			InputUtil.Type.KEYSYM,
 			GLFW.GLFW_KEY_LEFT_ALT,
-			createTranslationKey("category", Identifier.of(MOD_ID, "offhandhotbar"))
+			KEY_CATEGORY
+	));
+
+	public static final KeyBinding SCROLL_INVENTORY_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+			createTranslationKey("key", Identifier.of(MOD_ID, "scroll_inventory")),
+			InputUtil.Type.KEYSYM,
+			GLFW.GLFW_KEY_R,
+			KEY_CATEGORY
 	));
 
 	public static int getOffhandHotbarSlot(int selectedSlot) {
@@ -92,6 +104,22 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
                 getOffhandHotbarScreenHandlerSlot(selectedOffhandSlot, client));
         lastOffhandSlot = selectedOffhandSlot;
     }
+
+	public static void scrollInventory(MinecraftClient client, boolean forward) {
+		if (client.player == null) return;
+		var interactionManager = client.interactionManager;
+		if (interactionManager == null) return;
+		var syncId = client.player.playerScreenHandler.syncId;
+
+		swapOffhand(client, getOffhandHotbarScreenHandlerSlot(selectedOffhandSlot, client));
+
+		for (var i = 0; i < 9; i++) {
+			for (var j : forward ? forwardSlotOrder : backwardSlotOrder)
+				interactionManager.clickSlot(syncId, PlayerScreenHandler.INVENTORY_START + i + j, 0, SlotActionType.PICKUP, client.player);
+		}
+
+		swapOffhand(client, getOffhandHotbarScreenHandlerSlot(selectedOffhandSlot, client));
+	}
 
 	@Override
 	public void onInitializeClient() {

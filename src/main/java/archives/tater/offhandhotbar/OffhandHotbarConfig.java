@@ -20,5 +20,6 @@ public class OffhandHotbarConfig extends MidnightConfig {
     @Override
     public void onTabInit(String tabName, MidnightConfigListWidget list, MidnightConfigScreen screen) {
         MidnightLibExtras.KeybindButton.add(OffhandHotbar.CONTROL_OPPOSITE_KEY, list, screen);
+        MidnightLibExtras.KeybindButton.add(OffhandHotbar.SCROLL_INVENTORY_KEY, list, screen);
     }
 }
