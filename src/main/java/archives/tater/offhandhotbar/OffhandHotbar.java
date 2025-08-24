@@ -83,6 +83,10 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 		interactionManager.clickSlot(player.playerScreenHandler.syncId, slot2, OFFHAND_SWAP_ID, SlotActionType.SWAP, player);
 	}
 
+	public static void swapOffhand(MinecraftClient client) {
+		swapOffhand(client, getOffhandHotbarScreenHandlerSlot(selectedOffhandSlot, client));
+	}
+
 	public static void swapOffhand(MinecraftClient client, int slot) {
 		if (slot == -1) return;
 		var interactionManager = client.interactionManager;
@@ -111,14 +115,14 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 		if (interactionManager == null) return;
 		var syncId = client.player.playerScreenHandler.syncId;
 
-		swapOffhand(client, getOffhandHotbarScreenHandlerSlot(selectedOffhandSlot, client));
+		swapOffhand(client);
 
 		for (var i = 0; i < 9; i++) {
 			for (var j : forward ? forwardSlotOrder : backwardSlotOrder)
 				interactionManager.clickSlot(syncId, PlayerScreenHandler.INVENTORY_START + i + j, 0, SlotActionType.PICKUP, client.player);
 		}
 
-		swapOffhand(client, getOffhandHotbarScreenHandlerSlot(selectedOffhandSlot, client));
+		swapOffhand(client);
 	}
 
 	@Override
@@ -131,18 +135,20 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 
             if (!(client.currentScreen instanceof HandledScreen<?>) || client.player.currentScreenHandler == null) {
                 if (!swapped) {
-                    swapOffhand(client, getOffhandHotbarScreenHandlerSlot(selectedOffhandSlot, client));
-                    swapped = true;
+                    swapOffhand(client);
+                    swapped = !swapped;
                 }
             } else {
                 if (swapped) {
-                    swapOffhand(client, getOffhandHotbarScreenHandlerSlot(selectedOffhandSlot, client));
-                    swapped = false;
+                    swapOffhand(client);
+                    swapped = !swapped;
                 }
             }
         });
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-			swapped = true;
+			swapped = false;
+			selectedOffhandSlot = 0;
+			lastOffhandSlot = 0;
 		});
 	}
 
