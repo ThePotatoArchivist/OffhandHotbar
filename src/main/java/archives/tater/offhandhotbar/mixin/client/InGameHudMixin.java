@@ -4,7 +4,6 @@ import archives.tater.offhandhotbar.OffhandHotbar;
 import archives.tater.offhandhotbar.OffhandHotbarConfig;
 import archives.tater.offhandhotbar.OffhandHotbarConfig.DisplayMode;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -19,12 +18,14 @@ import net.minecraft.util.Arm;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.RotationAxis;
 import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import static archives.tater.offhandhotbar.OffhandHotbar.HOTBAR_GAP;
 import static archives.tater.offhandhotbar.OffhandHotbar.getOffhandHotbarSlot;
 
 @Mixin(InGameHud.class)
@@ -32,9 +33,9 @@ public abstract class InGameHudMixin {
 	@Shadow
     protected abstract @Nullable PlayerEntity getCameraPlayer();
 
-	@Shadow public abstract void tick(boolean paused);
+	@Shadow @Final private static Identifier HOTBAR_TEXTURE;
 
-	@Shadow protected abstract void tick();
+	@Shadow @Final private static Identifier HOTBAR_SELECTION_TEXTURE;
 
 	@Inject(
 			method = "renderMainHud",
@@ -76,40 +77,56 @@ public abstract class InGameHudMixin {
 		context.getMatrices().multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90));
 	}
 
-	@WrapMethod(
-			method = "renderHotbar"
+	@Inject(
+			method = "renderHotbar",
+			at = @At("HEAD")
 	)
-	private void shiftHotbar(DrawContext context, RenderTickCounter tickCounter, Operation<Void> original, @Share("offhand") LocalBooleanRef offhand) {
+	private void shiftHotbar(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
 		var cameraPlayer = getCameraPlayer();
 		var mainArm = cameraPlayer == null ? Arm.RIGHT : cameraPlayer.getMainArm();
 		var mx = mainArm == Arm.RIGHT ? 1 : -1;
 		var matrices = context.getMatrices();
 
 		matrices.push();
-		switch (OffhandHotbarConfig.displayMode) {
-			case SIDE_BY_SIDE -> matrices.translate(mx * OffhandHotbar.HOTBAR_X_OFFSET, 0, 0);
-			case STACKED -> {
-				matrices.push();
-				matrices.translate(0, -OffhandHotbar.HOTBAR_Y_OFFSET, 0);
+
+		if (OffhandHotbarConfig.displayMode == DisplayMode.SIDE_BY_SIDE)
+			matrices.translate(mx * OffhandHotbar.HOTBAR_X_OFFSET, 0, 0);
+	}
+
+	@Inject(
+			method = "renderHotbar",
+			at = @At("TAIL")
+	)
+	private void cleanup(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+		context.getMatrices().pop();
+	}
+
+	@WrapOperation(
+			method = "renderHotbar",
+			slice = @Slice(
+					from = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/hud/InGameHud;HOTBAR_TEXTURE:Lnet/minecraft/util/Identifier;")
+			),
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawGuiTexture(Lnet/minecraft/util/Identifier;IIII)V", ordinal = 0)
+	)
+	private void renderExtraHotbar(DrawContext instance, Identifier texture, int x, int y, int width, int height, Operation<Void> original) {
+		switch(OffhandHotbarConfig.displayMode) {
+			case SIDE_BY_SIDE -> {
+				original.call(instance, texture, x, y, width, height);
+				original.call(instance, texture, x + width + HOTBAR_GAP, y, width, height);
 			}
-			case VERTICAL_SWAPPED -> {
-				matrices.push();
-				offhandhotbar$hotbarRotate(context, mainArm == Arm.LEFT);
-			}
-		}
-		offhand.set(false);
-		original.call(context, tickCounter);
-		switch (OffhandHotbarConfig.displayMode) {
-			case SIDE_BY_SIDE -> matrices.translate(-mx * OffhandHotbar.HOTBAR_X_OFFSET * 2, 0, 0);
-			case STACKED, VERTICAL_SWAPPED -> matrices.pop();
-			case STACKED_SWAPPED -> matrices.translate(0, -OffhandHotbar.HOTBAR_Y_OFFSET, 0);
-			case VERTICAL -> {
-				offhandhotbar$hotbarRotate(context, mainArm == Arm.RIGHT);
-			}
+			case STACKED, STACKED_SWAPPED -> {
+				original.call(instance, texture, x, y, width, height);
+				original.call(instance, texture, x, y - height - HOTBAR_GAP, width, height);
+            }
+			case VERTICAL, VERTICAL_SWAPPED -> {
+				var cameraPlayer = getCameraPlayer();
+				var mainArm = cameraPlayer == null ? Arm.RIGHT : cameraPlayer.getMainArm();
+				var matrices = instance.getMatrices();
+				original.call(instance, texture, x, y, width, height);
+
+				original.call(instance, texture, x, y - height - HOTBAR_GAP, width, height);
+            }
         }
-		offhand.set(true);
-		original.call(context, tickCounter);
-		matrices.pop();
 	}
 
 	@WrapOperation(
