@@ -27,6 +27,7 @@ repositories {
 			includeGroup "maven.modrinth"
 		}
 	}
+	maven { url = "https://maven.bawnorton.com/releases" }
 }
 
 dependencies {
@@ -38,6 +39,8 @@ dependencies {
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modImplementation include("maven.modrinth:midnightlib:${project.midnightlib_version}")
+	modImplementation "maven.modrinth:combat-amenities:${project.combat_amenities_version}"
+	include(implementation(annotationProcessor("com.github.bawnorton.mixinsquared:mixinsquared-fabric:${project.mixinsquared_version}")))
 }
 
 processResources {

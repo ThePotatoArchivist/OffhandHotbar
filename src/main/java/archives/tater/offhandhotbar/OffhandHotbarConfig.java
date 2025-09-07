@@ -8,6 +8,7 @@ public class OffhandHotbarConfig extends MidnightConfig {
         SIDE_BY_SIDE, STACKED, STACKED_SWAPPED, VERTICAL, VERTICAL_SWAPPED;
 
         public final boolean isStacked() { return this == STACKED || this == STACKED_SWAPPED; }
+        public final boolean isSwapped() { return this == STACKED_SWAPPED || this == VERTICAL_SWAPPED; }
     }
 
     @Entry

@@ -6,7 +6,8 @@
     "GameMenuScreenMixin",
     "InGameHudMixin",
     "MinecraftClientMixin",
-    "MouseMixin"
+    "MouseMixin",
+    "combatamenities.HudRendererMixinMixin"
   ],
   "injectors": {
     "defaultRequire": 1
