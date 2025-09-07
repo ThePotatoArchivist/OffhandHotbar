@@ -106,27 +106,43 @@ public abstract class InGameHudMixin {
 			slice = @Slice(
 					from = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/hud/InGameHud;HOTBAR_TEXTURE:Lnet/minecraft/util/Identifier;")
 			),
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawGuiTexture(Lnet/minecraft/util/Identifier;IIII)V", ordinal = 0)
+			at = {
+					@At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawGuiTexture(Lnet/minecraft/util/Identifier;IIII)V", ordinal = 0),
+					@At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawGuiTexture(Lnet/minecraft/util/Identifier;IIII)V", ordinal = 1)
+			}
 	)
 	private void renderExtraHotbar(DrawContext instance, Identifier texture, int x, int y, int width, int height, Operation<Void> original) {
+		original.call(instance, texture, x, y, width, height);
 		switch(OffhandHotbarConfig.displayMode) {
-			case SIDE_BY_SIDE -> {
-				original.call(instance, texture, x, y, width, height);
-				original.call(instance, texture, x + width + HOTBAR_GAP, y, width, height);
-			}
-			case STACKED, STACKED_SWAPPED -> {
-				original.call(instance, texture, x, y, width, height);
-				original.call(instance, texture, x, y - height - HOTBAR_GAP, width, height);
-            }
+			case SIDE_BY_SIDE -> original.call(instance, texture, x + width + HOTBAR_GAP, y, width, height);
+			case STACKED, STACKED_SWAPPED -> original.call(instance, texture, x, y - height - HOTBAR_GAP, width, height);
 			case VERTICAL, VERTICAL_SWAPPED -> {
 				var cameraPlayer = getCameraPlayer();
-				var mainArm = cameraPlayer == null ? Arm.RIGHT : cameraPlayer.getMainArm();
-				var matrices = instance.getMatrices();
-				original.call(instance, texture, x, y, width, height);
-
+				instance.getMatrices().push();
+				offhandhotbar$hotbarRotate(instance, OffhandHotbarConfig.displayMode == DisplayMode.VERTICAL_SWAPPED ^ (cameraPlayer == null || cameraPlayer.getMainArm() == Arm.RIGHT));
 				original.call(instance, texture, x, y - height - HOTBAR_GAP, width, height);
+				instance.getMatrices().pop();
             }
         }
+	}
+
+	@WrapOperation(
+			method = "renderHotbar",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/InGameHud;renderHotbarItem(Lnet/minecraft/client/gui/DrawContext;IILnet/minecraft/client/render/RenderTickCounter;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/item/ItemStack;I)V", ordinal = 0)
+	)
+	private void renderExtraHotbar(InGameHud instance, DrawContext context, int x, int y, RenderTickCounter tickCounter, PlayerEntity player, ItemStack stack, int seed, Operation<Void> original) {
+		original.call(instance, context, x, y, tickCounter, player, stack, seed);
+		switch(OffhandHotbarConfig.displayMode) {
+			case SIDE_BY_SIDE -> original.call(instance, texture, x + width + HOTBAR_GAP, y, width, height);
+			case STACKED, STACKED_SWAPPED -> original.call(instance, texture, x, y - height - HOTBAR_GAP, width, height);
+			case VERTICAL, VERTICAL_SWAPPED -> {
+				var cameraPlayer = getCameraPlayer();
+				instance.getMatrices().push();
+				offhandhotbar$hotbarRotate(instance, OffhandHotbarConfig.displayMode == DisplayMode.VERTICAL_SWAPPED ^ (cameraPlayer == null || cameraPlayer.getMainArm() == Arm.RIGHT));
+				original.call(instance, texture, x, y - height - HOTBAR_GAP, width, height);
+				instance.getMatrices().pop();
+			}
+		}
 	}
 
 	@WrapOperation(
