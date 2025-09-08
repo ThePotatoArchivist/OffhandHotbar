@@ -5,8 +5,8 @@ import archives.tater.offhandhotbar.OffhandHotbarConfig;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.minecraft.client.Mouse;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Mouse;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.util.Hand;
 import org.spongepowered.asm.mixin.Final;
@@ -44,8 +44,15 @@ public class MouseMixin {
         if (OffhandHotbarConfig.scrollControls == Hand.OFF_HAND ^ OffhandHotbar.CONTROL_OPPOSITE_KEY.isPressed()) {
             OffhandHotbar.selectedOffhandSlot = value;
             OffhandHotbar.updateOffhandSlots(MinecraftClient.getInstance());
-        } else
+            return;
+        }
+        if (!OffhandHotbar.focusSwapped) {
             original.call(instance, value);
+            return;
+        }
+        OffhandHotbar.updateFocusSwap(client, false);
+        original.call(instance, value);
+        OffhandHotbar.updateFocusSwap(client, true);
     }
 
     @ModifyExpressionValue(

@@ -26,6 +26,7 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 	public static int selectedOffhandSlot = 0;
 	private static int lastOffhandSlot = selectedOffhandSlot;
 	public static boolean swapped = true;
+	public static boolean focusSwapped = false;
 
 	public static final int OFFHAND_SWAP_ID = 40;
 	public static final int SLOTS_OFFSET = 18;
@@ -103,9 +104,16 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 	public static void updateOffhandSlots(MinecraftClient client) {
         if (selectedOffhandSlot == lastOffhandSlot) return;
 		if (client.player == null) return;
+
+		var focusSwap = focusSwapped;
+		if (focusSwap) updateFocusSwap(client, false);
+
         offhandCycle(client,
                 getOffhandHotbarScreenHandlerSlot(lastOffhandSlot, client),
                 getOffhandHotbarScreenHandlerSlot(selectedOffhandSlot, client));
+
+		if (focusSwap) updateFocusSwap(client, true);
+
         lastOffhandSlot = selectedOffhandSlot;
     }
 
@@ -115,6 +123,9 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 		if (interactionManager == null) return;
 		var syncId = client.player.playerScreenHandler.syncId;
 
+		var focusSwap = focusSwapped;
+		if (focusSwap) updateFocusSwap(client, false);
+
 		swapOffhand(client);
 
 		for (var i = 0; i < 9; i++) {
@@ -123,7 +134,18 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 		}
 
 		swapOffhand(client);
+
+		if (focusSwap) updateFocusSwap(client, true);
 	}
+
+	public static void updateFocusSwap(MinecraftClient client, boolean swap) {
+        if (swap == focusSwapped) return;
+        focusSwapped = !focusSwapped;
+
+        var player = client.player;
+        if (player == null) return;
+        client.interactionManager.clickSlot(player.playerScreenHandler.syncId, PlayerScreenHandler.HOTBAR_START + player.getInventory().getSelectedSlot(), OFFHAND_SWAP_ID, SlotActionType.SWAP, player);
+    }
 
 	@Override
 	public void onInitializeClient() {
@@ -138,6 +160,8 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
                     swapOffhand(client);
                     swapped = !swapped;
                 }
+
+				updateFocusSwap(client, CONTROL_OPPOSITE_KEY.isPressed());
             } else {
                 if (swapped) {
                     swapOffhand(client);
@@ -147,6 +171,7 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
         });
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
 			swapped = false;
+			focusSwapped = false;
 			selectedOffhandSlot = 0;
 			lastOffhandSlot = 0;
 		});

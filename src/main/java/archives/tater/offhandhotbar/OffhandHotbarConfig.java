@@ -17,6 +17,8 @@ public class OffhandHotbarConfig extends MidnightConfig {
     public static Hand scrollControls = Hand.MAIN_HAND;
     @Entry
     public static Hand keyboardControls = Hand.OFF_HAND;
+    @Entry
+    public static boolean invertItemUseHandPriority = true;
 
     @Override
     public void onTabInit(String tabName, MidnightConfigListWidget list, MidnightConfigScreen screen) {

@@ -15,6 +15,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Identifier;
@@ -24,7 +25,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -129,22 +129,24 @@ public abstract class InGameHudMixin {
 		context.getMatrices().popMatrix();
 	}
 
-	@ModifyArg(
-			method = "renderHotbar",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;getStack(I)Lnet/minecraft/item/ItemStack;")
-	)
-	private int useRow3Items(int index, @Share("offhand") LocalBooleanRef offhand) {
-		return offhand.get() ? getOffhandHotbarSlot(index) : index;
-	}
-
-	@ModifyArg(
-			method = "renderHotbar",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/InGameHud;renderHotbarItem(Lnet/minecraft/client/gui/DrawContext;IILnet/minecraft/client/render/RenderTickCounter;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/item/ItemStack;I)V", ordinal = 0),
-			index = 5
-	)
-	private ItemStack useOffhandItem(ItemStack stack, @Share("offhand") LocalBooleanRef offhand, @Local(ordinal = 4) int index, @Local ItemStack offhandStack) {
-		return offhand.get() && OffhandHotbar.swapped && index == OffhandHotbar.selectedOffhandSlot ? offhandStack : stack;
-	}
+    @SuppressWarnings({"LocalMayBeArgsOnly"}) // Incorrect
+    @WrapOperation(
+            method = "renderHotbar",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;getStack(I)Lnet/minecraft/item/ItemStack;")
+    )
+    private ItemStack modifyDisplayedItem(PlayerInventory instance, int index, Operation<ItemStack> original, @Local ItemStack offhandStack, @Local PlayerEntity player, @Share("offhand") LocalBooleanRef offhand) {
+        if (OffhandHotbar.focusSwapped)
+            if (offhand.get()) {
+                if (index == OffhandHotbar.selectedOffhandSlot)
+                    return original.call(instance, player.getInventory().getSelectedSlot());
+            } else if (index == player.getInventory().getSelectedSlot())
+                return offhandStack;
+        if (!offhand.get())
+            return original.call(instance, index);
+        if (OffhandHotbar.swapped && index == OffhandHotbar.selectedOffhandSlot)
+            return offhandStack;
+        return original.call(instance, getOffhandHotbarSlot(index));
+    }
 
 	@ModifyExpressionValue(
 			method = "renderHotbar",
