@@ -3,6 +3,7 @@
   "offhandhotbar.midnightconfig.displayMode": "Display Mode",
   "offhandhotbar.midnightconfig.scrollControls": "Scrolling controls",
   "offhandhotbar.midnightconfig.keyboardControls": "Keyboard controls",
+  "offhandhotbar.midnightconfig.invertItemUseHandPriority": "Invert item use hand priority",
   "offhandhotbar.midnightconfig.enum.DisplayMode.SIDE_BY_SIDE": "Side by Side",
   "offhandhotbar.midnightconfig.enum.DisplayMode.STACKED": "Stacked",
   "offhandhotbar.midnightconfig.enum.DisplayMode.STACKED_SWAPPED": "Stacked Swapped",
