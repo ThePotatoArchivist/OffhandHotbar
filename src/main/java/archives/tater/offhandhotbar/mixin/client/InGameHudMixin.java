@@ -161,4 +161,15 @@ public abstract class InGameHudMixin {
 	private int useOffhandSlot(int original, @Share("offhand") LocalBooleanRef offhand) {
 		return offhand.get() ? OffhandHotbar.selectedOffhandSlot : original;
 	}
+
+	@Inject(
+			method = "renderHotbar",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;isEmpty()Z", ordinal = 1),
+			cancellable = true
+	)
+	// Prevents other mixins that inject at TAIL from rendering twice
+	private void earlyReturn(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci, @Share("offhand") LocalBooleanRef offhand) {
+		if (offhand.get() ^ OffhandHotbarConfig.displayMode.isSwapped())
+			ci.cancel();
+	}
 }
