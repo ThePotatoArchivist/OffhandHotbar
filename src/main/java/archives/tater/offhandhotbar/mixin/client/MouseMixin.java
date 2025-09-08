@@ -1,8 +1,11 @@
 package archives.tater.offhandhotbar.mixin.client;
 
 import archives.tater.offhandhotbar.OffhandHotbar;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
+import net.minecraft.entity.player.PlayerInventory;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,5 +30,19 @@ public class MouseMixin {
         OffhandHotbar.scrollInventory(client, vertical > 0);
 
         ci.cancel();
+    }
+
+    @WrapOperation(
+            method = "onMouseScroll",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;scrollInHotbar(D)V")
+    )
+    private void unswapFocus(PlayerInventory instance, double scrollAmount, Operation<Void> original) {
+        if (!OffhandHotbar.focusSwapped) {
+            original.call(instance, scrollAmount);
+            return;
+        }
+        OffhandHotbar.updateFocusSwap(client, false);
+        original.call(instance, scrollAmount);
+        OffhandHotbar.updateFocusSwap(client, true);
     }
 }

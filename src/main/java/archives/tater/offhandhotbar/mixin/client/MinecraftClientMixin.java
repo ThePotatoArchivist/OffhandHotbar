@@ -22,4 +22,18 @@ public class MinecraftClientMixin {
         else
             original.call(instance, value);
     }
+
+    @WrapOperation(
+            method = "handleInputEvents",
+            at = @At(value = "FIELD", target = "Lnet/minecraft/entity/player/PlayerInventory;selectedSlot:I")
+    )
+    private void unswapItems(PlayerInventory instance, int value, Operation<Void> original) {
+        if (!OffhandHotbar.focusSwapped) {
+            original.call(instance, value);
+            return;
+        }
+        OffhandHotbar.updateFocusSwap((MinecraftClient) (Object) this, false);
+        original.call(instance, value);
+        OffhandHotbar.updateFocusSwap((MinecraftClient) (Object) this, true);
+    }
 }

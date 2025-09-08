@@ -17,6 +17,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.RotationAxis;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -139,22 +140,24 @@ public abstract class InGameHudMixin {
 		context.getMatrices().pop();
 	}
 
-	@ModifyArg(
-			method = "renderHotbar",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/DefaultedList;get(I)Ljava/lang/Object;")
-	)
-	private int useRow3Items(int index, @Share("offhand") LocalBooleanRef offhand) {
-		return offhand.get() ? getOffhandHotbarSlot(index) : index;
-	}
-
-	@ModifyArg(
-			method = "renderHotbar",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/InGameHud;renderHotbarItem(Lnet/minecraft/client/gui/DrawContext;IILnet/minecraft/client/render/RenderTickCounter;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/item/ItemStack;I)V", ordinal = 0),
-			index = 5
-	)
-	private ItemStack useOffhandItem(ItemStack stack, @Share("offhand") LocalBooleanRef offhand, @Local(ordinal = 4) int index, @Local ItemStack offhandStack) {
-		return offhand.get() && OffhandHotbar.swapped && index == OffhandHotbar.selectedOffhandSlot ? offhandStack : stack;
-	}
+    @SuppressWarnings({"LocalMayBeArgsOnly"}) // Incorrect
+    @WrapOperation(
+            method = "renderHotbar",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/util/collection/DefaultedList;get(I)Ljava/lang/Object;")
+    )
+    private Object modifyDisplayedItem(DefaultedList<ItemStack> instance, int index, Operation<ItemStack> original, @Local ItemStack offhandStack, @Local PlayerEntity player, @Share("offhand") LocalBooleanRef offhand) {
+        if (OffhandHotbar.focusSwapped)
+            if (offhand.get()) {
+                if (index == OffhandHotbar.selectedOffhandSlot)
+                    return original.call(instance, player.getInventory().selectedSlot);
+            } else if (index == player.getInventory().selectedSlot)
+                return offhandStack;
+        if (!offhand.get())
+            return original.call(instance, index);
+        if (OffhandHotbar.swapped && index == OffhandHotbar.selectedOffhandSlot)
+            return offhandStack;
+        return original.call(instance, getOffhandHotbarSlot(index));
+    }
 
 	@ModifyExpressionValue(
 			method = "renderHotbar",
