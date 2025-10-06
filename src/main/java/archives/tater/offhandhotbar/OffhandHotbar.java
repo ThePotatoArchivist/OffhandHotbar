@@ -1,11 +1,11 @@
 package archives.tater.offhandhotbar;
 
-import eu.midnightdust.lib.config.MidnightConfig;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen.CreativeScreenHandler;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -16,6 +16,8 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
+
+import eu.midnightdust.lib.config.MidnightConfig;
 import org.lwjgl.glfw.GLFW;
 
 import static net.minecraft.util.Util.createTranslationKey;
@@ -40,7 +42,7 @@ public class OffhandHotbar implements ModInitializer, ClientModInitializer {
 	private static final int[] forwardSlotOrder = {0, 9, 18, 0};
 	private static final int[] backwardSlotOrder = {18, 9, 0, 18};
 
-	public static final String KEY_CATEGORY = createTranslationKey("category", Identifier.of(MOD_ID, "offhandhotbar"));
+	public static final KeyBinding.Category KEY_CATEGORY = KeyBinding.Category.create(Identifier.of(MOD_ID, "offhandhotbar"));
 
 	public static final KeyBinding CONTROL_OPPOSITE_KEY = KeyBindingHelper.registerKeyBinding(new KeyBinding(
 			createTranslationKey("key", Identifier.of(MOD_ID, "control_opposite")),

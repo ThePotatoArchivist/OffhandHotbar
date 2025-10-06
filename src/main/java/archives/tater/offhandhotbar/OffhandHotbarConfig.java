@@ -1,7 +1,10 @@
 package archives.tater.offhandhotbar;
 
-import eu.midnightdust.lib.config.MidnightConfig;
 import net.minecraft.util.Hand;
+
+import eu.midnightdust.lib.config.MidnightConfig;
+import eu.midnightdust.lib.config.MidnightConfigListWidget;
+import eu.midnightdust.lib.config.MidnightConfigScreen;
 
 public class OffhandHotbarConfig extends MidnightConfig {
     public enum DisplayMode {

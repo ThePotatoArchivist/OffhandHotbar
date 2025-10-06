@@ -1,21 +1,28 @@
 package archives.tater.offhandhotbar.mixin.client;
 
 import archives.tater.offhandhotbar.OffhandHotbar;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.GameMenuScreen;
-import net.minecraft.text.Text;
+
+import com.llamalad7.mixinextras.injector.ModifyReceiver;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.GameMenuScreen;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.text.Text;
 
 @Mixin(GameMenuScreen.class)
-public class GameMenuScreenMixin {
-    @Inject(
-            method = "disconnect",
-            at = @At("HEAD")
+public abstract class GameMenuScreenMixin extends Screen {
+    protected GameMenuScreenMixin(Text title) {
+        super(title);
+    }
+
+    @ModifyReceiver(
+            method = "method_72129",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;disconnect(Lnet/minecraft/text/Text;)V")
     )
-    private static void unswap(MinecraftClient client, Text disconnectReason, CallbackInfo ci) {
-        OffhandHotbar.swapOffhand(client);
+    private static MinecraftClient unswap(MinecraftClient instance, Text reasonText) {
+        OffhandHotbar.swapOffhand(instance);
+        return instance;
     }
 }
